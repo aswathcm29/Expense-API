@@ -12,7 +12,9 @@ const app = express()
 const mongoose = require('mongoose')
 const bodyParser = require('body-parser')
 const { Model } = require('./schema')
+const cors = require('cors')
 app.use(bodyParser.json())
+app.use(cors())
 
 const connectToDb = async()=>{
     try{
@@ -68,11 +70,57 @@ app.get('/get-expense',async function(req,res){
 })
 
 app.delete('/delete-expense/:id',async function (req,res){
-    const ExpenseId = await Model.findById(req.params.id)
-    if(ExpenseId){
-      await Model.findByIdAndDelete(req.params.id)
-      res.status(200).json({
-        'error':'false',
+    
+    try{
+      const ExpenseId = await Model.findById(req.params.id)
+      if(ExpenseId){
+        await Model.findByIdAndDelete(req.params.id)
+        res.status(200).json({
+          'error':'false',
+           'meessage':'Entry Deleted'
+        })
+      }
+        else {
+          response.status(404).json({
+              "error" : "true",
+              "message" : "entry not found"
+          })
+      }
+    }catch(err){
+      res.status(500).json({
+        'error':'true',
+        'message':'Could not delete',
+         'reason':err.message
       })
     }
-})
+  })
+
+  app.post('/update-expense/:id',async function(req,res){
+     try{
+      const ExpenseId = await Model.findByIdAndUpdate(req.params.id)
+      if(ExpenseId){
+       await Model.updateOne({
+         "amount":req.body.amount,
+         "description":req.body.description,
+         "date":req.body.date
+       })
+       res.status(201).json({
+         'error':'false',
+         'message':'entry updated'
+       })
+      }
+      else{
+       res.status(404).json({
+         'error':'true',
+         'message':'entry not found'
+       })
+      }
+     }
+     catch(err){
+      res.status(501).json({
+        'error':'true',
+        'message':'failure',
+        'reason':err.message
+      })
+     }  
+  })
